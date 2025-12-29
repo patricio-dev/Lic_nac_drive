@@ -1,0 +1,5 @@
+google-auth
+google-api-python-client
+gspread
+selenium
+webdriver-manager
