@@ -1,0 +1,32 @@
+name: Bot Limpieza Drive (Strikes)
+
+on:
+  workflow_dispatch: # Botón manual
+  schedule:
+    # Se ejecuta a las 02:00 y 14:00 UTC (Aprox 11PM y 11AM Chile)
+    - cron: '0 2,14 * * *'
+
+jobs:
+  run-cleanup:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+
+      - name: Ejecutar Limpieza
+        env:
+          # Usamos los mismos secretos que ya configuraste
+          GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+          DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
+        run: python bot_limpieza.py
