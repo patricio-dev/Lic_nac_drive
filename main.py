@@ -110,9 +110,9 @@ def iniciar_navegador():
 
     opciones = webdriver.ChromeOptions()
     
-    # --- CONFIGURACIÓN CRÍTICA PARA ARM64 (CELULAR) ---
-    # Le decimos a Selenium dónde está el Chromium que instalamos con apt
-    opciones.binary_location = "/usr/bin/chromium-browser"
+    # --- CONFIGURACIÓN CRÍTICA PARA ARM64 (CELULAR / PPA XTRADEB) ---
+    # En el paquete xtradeb, el binario suele llamarse 'chromium' a secas
+    opciones.binary_location = "/usr/bin/chromium"
 
     # --- OPTIMIZACIÓN Y DESCARGAS ---
     preferencias = {
@@ -143,6 +143,10 @@ def iniciar_navegador():
     opciones.add_argument("--no-sandbox")
     opciones.add_argument("--disable-dev-shm-usage")
     
+    # --- PARCHES EXTRA PARA ESTABILIDAD (EVITA ERROR STATUS 1) ---
+    opciones.add_argument("--remote-debugging-port=9222")
+    opciones.add_argument("--disable-software-rasterizer")
+
     # Optimización de caché para evitar llenado de disco en Actions
     opciones.add_argument("--disk-cache-dir=/dev/null") 
     opciones.add_argument("--disk-cache-size=1")
@@ -163,7 +167,7 @@ def iniciar_navegador():
         return driver
     except Exception as e:
         logging.error(f"❌ Error iniciando WebDriver: {e}")
-        logging.error("Asegúrate de haber instalado: apt install chromium-browser chromium-chromedriver")
+        logging.error("Asegúrate de haber instalado los paquetes del PPA xtradeb/apps correctamente.")
         raise e
 
 # --- DRIVE ---
