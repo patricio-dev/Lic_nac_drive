@@ -17,11 +17,18 @@ jobs:
 
       - name: 📦 Instalar dependencias
         run: |
-          # 1. Instalamos Chromium y el Driver (Versión ARM para celular)
-          # Esto es CRÍTICO para que funcione el nuevo código de Python
-          apt update && apt install chromium-browser chromium-chromedriver -y
+          # 1. Instalar herramienta para añadir repositorios
+          apt update && apt install software-properties-common -y
 
-          # 2. Instalamos librerías de Python ignorando las preinstaladas
+          # 2. Añadir el PPA 'xtradeb' (Truco para evitar Snap en Termux)
+          add-apt-repository ppa:xtradeb/apps -y
+          apt update
+
+          # 3. Instalar Chromium, Driver y LIBRERÍAS DE SISTEMA (Cruciales)
+          # Sin estas librerías (libnss3, libatk, etc), el navegador crashea al instante
+          apt install chromium chromium-driver libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libasound2 -y
+
+          # 4. Instalar librerías de Python
           pip3 install -r requirements.txt --break-system-packages --ignore-installed
 
       - name: 🚀 Ejecutar Bot
