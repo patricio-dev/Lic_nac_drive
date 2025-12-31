@@ -18,12 +18,12 @@ jobs:
       - name: 📥 Descargar código
         uses: actions/checkout@v4
 
-      # 2. Instalar dependencias (CORREGIDO PARA TERMUX/UBUNTU)
+      # 2. Instalar dependencias
       - name: 📦 Instalar dependencias
         run: |
-          # Actualizamos pip por si acaso
-          pip3 install --upgrade pip --break-system-packages
-          # Instalamos librerías permitiendo romper paquetes del sistema (necesario en este entorno)
+          # ❌ ELIMINADO: No actualizamos pip para evitar el error "uninstall-no-record-file"
+          
+          # ✅ Instalamos solo tus librerías (pandas, gspread, etc.)
           pip3 install -r requirements.txt --break-system-packages
 
       # 3. Ejecutar el Bot
@@ -33,7 +33,5 @@ jobs:
           SHEET_ID: ${{ secrets.SHEET_ID }}
           DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
         run: |
-          # Usamos python3 explícitamente.
-          # Configuramos lote 1 de 1 para que procese TODO en una sola tirada
-          # (Ya que no tenemos límite de tiempo, no hace falta dividirlo)
+          # Usamos python3 explícitamente y corremos todo en un solo lote
           python3 main.py --lote 1 --total_lotes 1
