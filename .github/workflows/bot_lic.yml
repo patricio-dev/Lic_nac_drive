@@ -9,7 +9,7 @@ on:
 jobs:
   procesar-licitaciones:
     name: Bot Clon ${{ matrix.lote }}
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 350 # Límite de seguridad (casi 6 horas)
 
     strategy:
