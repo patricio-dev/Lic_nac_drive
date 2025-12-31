@@ -8,26 +8,24 @@ import random
 import argparse
 import sys
 import json
-import re  # <--- Agregado para sanitizar nombres
+import re  # Para sanitizar nombres
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import UnexpectedAlertPresentException, TimeoutException
-from webdriver_manager.chrome import ChromeDriverManager
+
+# NOTA: Se eliminó 'webdriver_manager' porque usaremos el del sistema (ARM64)
 
 # --- CONFIGURACIÓN CENTRALIZADA ---
 class Config:
     # Credenciales y IDs (AHORA DESDE VARIABLES DE ENTORNO)
-    # RUTA_JSON_KEY ya no se usa.
-    
-    # Se usan valores por defecto vacíos para evitar errores al importar, 
-    # pero se validan antes de usar.
     ID_HOJA_CALCULO = os.environ.get("SHEET_ID")
     ID_CARPETA_DRIVE_DESTINO = os.environ.get("DRIVE_FOLDER_ID")
     
@@ -112,6 +110,10 @@ def iniciar_navegador():
 
     opciones = webdriver.ChromeOptions()
     
+    # --- CONFIGURACIÓN CRÍTICA PARA ARM64 (CELULAR) ---
+    # Le decimos a Selenium dónde está el Chromium que instalamos con apt
+    opciones.binary_location = "/usr/bin/chromium-browser"
+
     # --- OPTIMIZACIÓN Y DESCARGAS ---
     preferencias = {
         "download.default_directory": os.path.abspath(CARPETA_TEMP),
@@ -132,24 +134,37 @@ def iniciar_navegador():
     opciones.add_experimental_option("excludeSwitches", ["enable-automation"]) 
     opciones.add_experimental_option('useAutomationExtension', False) 
 
-    # --- CONFIGURACIÓN PARA SERVIDOR (GITHUB ACTIONS) ---
+    # --- CONFIGURACIÓN PARA SERVIDOR (GITHUB ACTIONS / TERMUX) ---
     opciones.add_argument("--headless=new") 
     opciones.add_argument("--window-size=1920,1080")
     opciones.add_argument("--disable-gpu")
+    
+    # CRITICO PARA ROOT EN TERMUX
     opciones.add_argument("--no-sandbox")
     opciones.add_argument("--disable-dev-shm-usage")
+    
     # Optimización de caché para evitar llenado de disco en Actions
     opciones.add_argument("--disk-cache-dir=/dev/null") 
     opciones.add_argument("--disk-cache-size=1")
     
     opciones.add_argument("--log-level=3") 
-    opciones.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36")
+    opciones.add_argument("user-agent=Mozilla/5.0 (X11; Linux aarch64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")
     
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=opciones)
+    # --- INICIO DEL DRIVER SIN WEBDRIVER-MANAGER ---
+    # Usamos la ruta directa donde apt instala el driver
+    driver_path = "/usr/bin/chromedriver"
     
-    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-    driver.set_page_load_timeout(Config.PAGE_LOAD_TIMEOUT)
-    return driver
+    try:
+        service = Service(executable_path=driver_path)
+        driver = webdriver.Chrome(service=service, options=opciones)
+        
+        driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        driver.set_page_load_timeout(Config.PAGE_LOAD_TIMEOUT)
+        return driver
+    except Exception as e:
+        logging.error(f"❌ Error iniciando WebDriver: {e}")
+        logging.error("Asegúrate de haber instalado: apt install chromium-browser chromium-chromedriver")
+        raise e
 
 # --- DRIVE ---
 
@@ -322,8 +337,8 @@ def procesar_lote(lote_datos, drive_service, worksheet):
 
                 mapa_archivos_drive = {}
                 if id_carpeta_destino and not es_nueva:
-                     res = drive_service.files().list(q=f"'{id_carpeta_destino}' in parents and trashed=false", fields="files(id, name)", supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
-                     for f in res.get('files', []): mapa_archivos_drive[f['name'].lower()] = f['id']
+                      res = drive_service.files().list(q=f"'{id_carpeta_destino}' in parents and trashed=false", fields="files(id, name)", supportsAllDrives=True, includeItemsFromAllDrives=True).execute()
+                      for f in res.get('files', []): mapa_archivos_drive[f['name'].lower()] = f['id']
 
                 ventana_principal = driver.current_window_handle
                 
