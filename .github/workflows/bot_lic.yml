@@ -1,46 +1,39 @@
-name: Bot Licitaciones Paralelo
+name: Bot Licitaciones Celular
 
 on:
   workflow_dispatch: # Botón manual
   schedule:
-    # Se ejecuta automáticamente cada 6 horas (00, 06, 12, 18 UTC)
+    # Se ejecuta automáticamente cada 6 horas
     - cron: '0 */6 * * *'
 
 jobs:
   procesar-licitaciones:
-    name: Bot Clon ${{ matrix.lote }}
+    name: Bot Ejecucion Celular
     runs-on: self-hosted
-    timeout-minutes: 350 # Límite de seguridad (casi 6 horas)
-
-    strategy:
-      fail-fast: false # Si el Clon 1 falla, el 2, 3 y 4 siguen trabajando
-      matrix:
-        # Lanzamos 4 máquinas virtuales simultáneas
-        lote: [1, 2, 3, 4]
+    # Quitamos el timeout o lo ponemos muy alto (ej. 24 horas) para que no te corte
+    timeout-minutes: 1440 
 
     steps:
       # 1. Descargar tu código
       - name: 📥 Descargar código
         uses: actions/checkout@v4
 
-      # 2. Instalar Python 3.12
-      - name: 🐍 Instalar Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      # 3. Instalar librerías
+      # 2. Instalar dependencias (CORREGIDO PARA TERMUX/UBUNTU)
       - name: 📦 Instalar dependencias
         run: |
-          pip install -r requirements.txt
+          # Actualizamos pip por si acaso
+          pip3 install --upgrade pip --break-system-packages
+          # Instalamos librerías permitiendo romper paquetes del sistema (necesario en este entorno)
+          pip3 install -r requirements.txt --break-system-packages
 
-      # 4. Ejecutar el Bot (YA NO CREAMOS EL ARCHIVO JSON)
-      # Pasamos los secretos directamente a la memoria del proceso
+      # 3. Ejecutar el Bot
       - name: 🚀 Ejecutar Bot
         env:
           GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
           SHEET_ID: ${{ secrets.SHEET_ID }}
           DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
         run: |
-          # Ejecutamos el script indicando qué número de lote es este clon
-          python main.py --lote ${{ matrix.lote }} --total_lotes 4
+          # Usamos python3 explícitamente.
+          # Configuramos lote 1 de 1 para que procese TODO en una sola tirada
+          # (Ya que no tenemos límite de tiempo, no hace falta dividirlo)
+          python3 main.py --lote 1 --total_lotes 1
