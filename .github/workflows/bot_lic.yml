@@ -15,19 +15,41 @@ jobs:
       - name: 📥 Descargar código
         uses: actions/checkout@v4
 
-      - name: 📦 Instalar dependencias
+      - name: 📦 Instalar dependencias (TÉCNICA DE EXTRACCIÓN MANUAL)
         run: |
-          # 1. Herramientas básicas
-          apt update && apt install software-properties-common -y
+          # 1. Limpiamos el desastre del intento anterior
+          # Esto repara el error "dpkg returned error code 1"
+          dpkg --configure -a || true
+          apt --fix-broken install -y || true
 
-          # 2. Añadir repositorio PPA para Chromium
+          # 2. Preparamos el repositorio (si no estaba ya)
+          apt update && apt install software-properties-common -y
           add-apt-repository ppa:xtradeb/apps -y
           apt update
 
-          # 3. Instalar Chromium + Librerías (CORREGIDO: libasound2 -> libasound2t64)
-          apt install chromium chromium-driver libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libasound2t64 -y
+          # 3. Instalamos el NAVEGADOR y las LIBRERÍAS (Pero NO el driver aún)
+          # Nota: Usamos libasound2t64 porque tu Ubuntu es moderno (24.04+)
+          apt install chromium libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libasound2t64 -y
 
-          # 4. Instalar Python libs
+          # 4. TRUCO: Instalación manual del Driver para saltar el error
+          echo "🔧 Instalando Driver manualmente..."
+          
+          # Descargamos el archivo .deb del driver sin instalarlo
+          apt download chromium-driver
+          
+          # Lo descomprimimos en una carpeta temporal
+          dpkg-deb -x chromium-driver*.deb temp_driver
+          
+          # Movemos el ejecutable a la carpeta de sistema a la fuerza
+          mv temp_driver/usr/bin/chromedriver /usr/bin/chromedriver
+          chmod +x /usr/bin/chromedriver
+          
+          # Borramos la basura
+          rm -rf temp_driver chromium-driver*.deb
+          
+          echo "✅ Driver instalado en /usr/bin/chromedriver"
+
+          # 5. Instalar librerías de Python
           pip3 install -r requirements.txt --break-system-packages --ignore-installed
 
       - name: 🚀 Ejecutar Bot
