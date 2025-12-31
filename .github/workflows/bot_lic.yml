@@ -17,7 +17,11 @@ jobs:
 
       - name: 📦 Instalar dependencias
         run: |
-          # Usamos --ignore-installed para que no falle si encuentra librerías del sistema
+          # 1. Instalamos Chromium y el Driver (Versión ARM para celular)
+          # Esto es CRÍTICO para que funcione el nuevo código de Python
+          apt update && apt install chromium-browser chromium-chromedriver -y
+
+          # 2. Instalamos librerías de Python ignorando las preinstaladas
           pip3 install -r requirements.txt --break-system-packages --ignore-installed
 
       - name: 🚀 Ejecutar Bot
