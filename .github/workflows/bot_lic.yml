@@ -1,37 +1,29 @@
 name: Bot Licitaciones Celular
 
 on:
-  workflow_dispatch: # Botón manual
+  workflow_dispatch:
   schedule:
-    # Se ejecuta automáticamente cada 6 horas
     - cron: '0 */6 * * *'
 
 jobs:
   procesar-licitaciones:
     name: Bot Ejecucion Celular
     runs-on: self-hosted
-    # Quitamos el timeout o lo ponemos muy alto (ej. 24 horas) para que no te corte
     timeout-minutes: 1440 
 
     steps:
-      # 1. Descargar tu código
       - name: 📥 Descargar código
         uses: actions/checkout@v4
 
-      # 2. Instalar dependencias
       - name: 📦 Instalar dependencias
         run: |
-          # ❌ ELIMINADO: No actualizamos pip para evitar el error "uninstall-no-record-file"
-          
-          # ✅ Instalamos solo tus librerías (pandas, gspread, etc.)
-          pip3 install -r requirements.txt --break-system-packages
+          # Usamos --ignore-installed para que no falle si encuentra librerías del sistema
+          pip3 install -r requirements.txt --break-system-packages --ignore-installed
 
-      # 3. Ejecutar el Bot
       - name: 🚀 Ejecutar Bot
         env:
           GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
           SHEET_ID: ${{ secrets.SHEET_ID }}
           DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
         run: |
-          # Usamos python3 explícitamente y corremos todo en un solo lote
           python3 main.py --lote 1 --total_lotes 1
