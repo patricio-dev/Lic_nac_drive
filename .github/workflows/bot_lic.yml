@@ -17,18 +17,17 @@ jobs:
 
       - name: 📦 Instalar dependencias
         run: |
-          # 1. Instalar herramienta para añadir repositorios
+          # 1. Herramientas básicas
           apt update && apt install software-properties-common -y
 
-          # 2. Añadir el PPA 'xtradeb' (Truco para evitar Snap en Termux)
+          # 2. Añadir repositorio PPA para Chromium
           add-apt-repository ppa:xtradeb/apps -y
           apt update
 
-          # 3. Instalar Chromium, Driver y LIBRERÍAS DE SISTEMA (Cruciales)
-          # Sin estas librerías (libnss3, libatk, etc), el navegador crashea al instante
-          apt install chromium chromium-driver libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libasound2 -y
+          # 3. Instalar Chromium + Librerías (CORREGIDO: libasound2 -> libasound2t64)
+          apt install chromium chromium-driver libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libasound2t64 -y
 
-          # 4. Instalar librerías de Python
+          # 4. Instalar Python libs
           pip3 install -r requirements.txt --break-system-packages --ignore-installed
 
       - name: 🚀 Ejecutar Bot
